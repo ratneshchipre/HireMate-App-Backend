@@ -22,7 +22,15 @@ const companySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    logoUrl: String,
+    uploadedFile: {
+      url: String,
+      publicId: String,
+      uploadedAt: { type: Date, default: Date.now },
+      type: {
+        type: String,
+        enum: ["image", "pdf"],
+      },
+    },
     role: {
       type: String,
       required: true,
