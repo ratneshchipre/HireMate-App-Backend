@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    fullname: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: String,
+    codeExpiresAt: Date,
   },
   { timestamps: true }
 );
