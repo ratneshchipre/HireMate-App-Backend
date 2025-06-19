@@ -2,6 +2,10 @@ const User = require("../models/userModel");
 const generateOTP = require("../helpers/otpGenerator");
 const { sendEmail } = require("../services/emailService");
 
+// Helper for rate limiting that tracks last request time per email
+const lastOtpRequestTime = new Map();
+const RESEND_OTP_COOLDOWN_SECONDS = 60;
+
 const handleSendingOtp = async (req, res) => {
   const { email } = req.body;
 
@@ -75,18 +79,31 @@ const handleOtpVerification = async (req, res) => {
       });
     }
 
+    if (user.isVerified) {
+      if (user.verificationCode || user.codeExpiresAt) {
+        user.verificationCode = undefined;
+        user.codeExpiresAt = undefined;
+        await user.save();
+      }
+      return res.status(200).json({
+        success: true,
+        message: "Email is already verified.",
+      });
+    }
+
     if (!user.verificationCode) {
       return res.status(400).json({
         success: false,
-        message: "Invalid attempt. No verification code found for this email.",
+        message:
+          "No verification code found for this email. Please request one.",
       });
     }
 
     if (new Date() > user.codeExpiresAt) {
       user.verificationCode = undefined;
       user.codeExpiresAt = undefined;
-
       await user.save();
+
       return res.status(400).json({
         success: false,
         message: "Verification code has expired. Please request a new one.",
@@ -94,11 +111,13 @@ const handleOtpVerification = async (req, res) => {
     }
 
     if (verificationCode === user.verificationCode) {
-      user.isVerified = true;
+      if (!user.isVerified) {
+        user.isVerified = true;
+      }
       user.verificationCode = undefined;
       user.codeExpiresAt = undefined;
-
       await user.save();
+
       return res.status(200).json({
         success: true,
         message: "Email verified successfully.",
@@ -118,7 +137,89 @@ const handleOtpVerification = async (req, res) => {
   }
 };
 
+const handleResendOtp = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required.",
+    });
+  }
+
+  try {
+    const lastRequest = lastOtpRequestTime.get(email);
+    const currentTime = Date.now();
+
+    if (
+      lastRequest &&
+      currentTime - lastRequest < RESEND_OTP_COOLDOWN_SECONDS * 1000
+    ) {
+      const timeLeft = Math.ceil(
+        (RESEND_OTP_COOLDOWN_SECONDS * 1000 - (currentTime - lastRequest)) /
+          1000
+      );
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${timeLeft} seconds before requesting a new code.`,
+        retryAfter: timeLeft,
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "If a user with that email exists, a new verification code will be sent.",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified. No new code is needed.",
+      });
+    }
+
+    const newOtp = generateOTP();
+    const newExpiryTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.verificationCode = newOtp;
+    user.codeExpiresAt = newExpiryTime;
+    await user.save();
+
+    const emailSubject = "Your New Verification Code for SaaS App";
+    const emailHtml = `
+            <p>Dear ${user.fullname},</p>
+            <p>Here is your new verification code for SaaS App: <strong>${newOtp}</strong>.</p>
+            <p>This code is valid for 10 minutes. Please enter it in the app to verify your email address.</p>
+            <p>If you did not request this, please ignore this email.</p>
+            <p>Thanks,<br>The SaaS App Team</p>
+        `;
+    const emailText = `Dear ${user.fullname},\n\nHere is your new verification code for SaaS App: ${newOtp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe SaaS App Team`;
+
+    await sendEmail(email, emailSubject, emailHtml, emailText);
+
+    lastOtpRequestTime.set(email, currentTime);
+
+    res.status(200).json({
+      success: true,
+      message: "A new verification code has been sent to your email.",
+      cooldown: RESEND_OTP_COOLDOWN_SECONDS,
+    });
+  } catch (error) {
+    console.error("Error during resending an OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Failed to process your request.",
+    });
+  }
+};
+
 module.exports = {
   handleSendingOtp,
   handleOtpVerification,
+  handleResendOtp,
 };
