@@ -4,6 +4,7 @@ const connectMongoDb = require("./connect");
 require("dotenv").config();
 
 const userRouter = require("./routes/userRoutes");
+const otpRouter = require("./routes/otpRoutes");
 const setupRouter = require("./routes/setupRoutes");
 const fileUploadRouter = require("./routes/fileUploadRoutes");
 
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use("/api/user", userRouter); // Authentication route
+app.use("/api/send-otp", otpRouter); // Send OTP route
 app.use("/api/account", setupRouter); // Setup route
 app.use("/api/company", fileUploadRouter); // File upload route
 
