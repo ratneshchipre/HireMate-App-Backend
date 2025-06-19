@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use("/api/user", userRouter); // Authentication route
-app.use("/api/send-otp", otpRouter); // Send OTP route
+app.use("/api/verify-user", otpRouter); // Verify user route
 app.use("/api/account", setupRouter); // Setup route
 app.use("/api/company", fileUploadRouter); // File upload route
 

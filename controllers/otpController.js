@@ -55,6 +55,70 @@ const handleSendingOtp = async (req, res) => {
   }
 };
 
+const handleOtpVerification = async (req, res) => {
+  const { email, verificationCode } = req.body;
+
+  if (!email || !verificationCode) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and verification code are required.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid attempt. Please check your email and code.",
+      });
+    }
+
+    if (!user.verificationCode) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid attempt. No verification code found for this email.",
+      });
+    }
+
+    if (new Date() > user.codeExpiresAt) {
+      user.verificationCode = undefined;
+      user.codeExpiresAt = undefined;
+
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        message: "Verification code has expired. Please request a new one.",
+      });
+    }
+
+    if (verificationCode === user.verificationCode) {
+      user.isVerified = true;
+      user.verificationCode = undefined;
+      user.codeExpiresAt = undefined;
+
+      await user.save();
+      return res.status(200).json({
+        success: true,
+        message: "Email verified successfully.",
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification code. Please try again.",
+      });
+    }
+  } catch (error) {
+    console.error("Error during OTP verification:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Failed to process your request.",
+    });
+  }
+};
+
 module.exports = {
   handleSendingOtp,
+  handleOtpVerification,
 };
