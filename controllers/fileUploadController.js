@@ -51,12 +51,14 @@ const handleFileUpload = async (req, res) => {
       });
     }
 
-    company.uploadedFile = {
-      url: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      uploadedAt: new Date(),
-      type: fileType,
-    };
+    if (fileType) {
+      company.uploadedFile = {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        uploadedAt: new Date(),
+        type: fileType,
+      };
+    }
 
     await company.save();
 

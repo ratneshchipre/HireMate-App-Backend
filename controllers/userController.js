@@ -94,8 +94,7 @@ const handleUserSignIn = async (req, res) => {
 
 const checkTokenValidation = async (req, res) => {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = req.headers["x-auth-token"];
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -116,13 +115,21 @@ const checkTokenValidation = async (req, res) => {
     if (!user) {
       return res.status(401).json({
         success: false,
+        message: "User not found, authorization denied.",
       });
     }
 
-    return res.status(201).json({
+    return res.status(200).json({
       success: true,
+      user: {
+        id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        token: token,
+      },
     });
   } catch (error) {
+    console.error("Token validation error:", error);
     return res.status(500).json({
       success: false,
       message: error.message,

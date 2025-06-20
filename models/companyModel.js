@@ -25,7 +25,7 @@ const companySchema = new mongoose.Schema(
     uploadedFile: {
       url: String,
       publicId: String,
-      uploadedAt: { type: Date, default: Date.now },
+      uploadedAt: { type: Date },
       type: {
         type: String,
         enum: ["image", "pdf"],

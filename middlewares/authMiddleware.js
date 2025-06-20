@@ -2,8 +2,7 @@ const { getUser } = require("../services/authService");
 
 const checkForAuthentication = async (req, res, next) => {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = req.headers["x-auth-token"];
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -24,6 +23,7 @@ const checkForAuthentication = async (req, res, next) => {
     req.token = token;
     next();
   } catch (error) {
+    console.error("Auth error:", error);
     return res.status(500).json({
       success: false,
       message: error.message || "Authentication failed. Please login again.",

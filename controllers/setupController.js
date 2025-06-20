@@ -49,6 +49,42 @@ const handleAccountSetup = async (req, res) => {
   }
 };
 
+const getCompanyData = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const company = await Company.findOne({ userId });
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found, try again later.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Company data fetched successfully.",
+      companyData: {
+        dataId: company._id,
+        userId: company.userId,
+        name: company.name,
+        address: company.address,
+        industry: company.industry,
+        role: company.role,
+        size: company.size,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching company data:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching company data.",
+    });
+  }
+};
+
 module.exports = {
   handleAccountSetup,
+  getCompanyData,
 };
