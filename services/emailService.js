@@ -20,13 +20,20 @@ transporter.verify((error, success) => {
   }
 });
 
-const sendEmail = async (to, subject, htmlContent, textContent = "") => {
+const sendEmail = async (
+  to,
+  subject,
+  htmlContent,
+  textContent = "",
+  attachments = []
+) => {
   const mailOptions = {
     from: process.env.EMAIL_FROM_ADDRESS,
     to,
     subject,
     text: textContent,
     html: htmlContent,
+    attachments,
   };
 
   try {

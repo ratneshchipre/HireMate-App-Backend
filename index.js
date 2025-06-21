@@ -7,6 +7,8 @@ const userRouter = require("./routes/userRoutes");
 const otpRouter = require("./routes/otpRoutes");
 const setupRouter = require("./routes/setupRoutes");
 const fileUploadRouter = require("./routes/fileUploadRoutes");
+const sendFileRouter = require("./routes/sendFileRoutes");
+const candidateRouter = require("./routes/candidateRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +44,8 @@ app.use("/api/user", userRouter); // Authentication route
 app.use("/api/verify-user", otpRouter); // Verify user route
 app.use("/api/account", setupRouter); // Setup route
 app.use("/api/company", fileUploadRouter); // File upload route
+app.use("/api/email", sendFileRouter); // Send file via email route
+app.use("/api/candidate", candidateRouter); // Store candidate data route
 
 app.listen(PORT, () => {
   console.log(`Server running successfully on PORT ${PORT}`);

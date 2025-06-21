@@ -94,7 +94,8 @@ const handleUserSignIn = async (req, res) => {
 
 const checkTokenValidation = async (req, res) => {
   try {
-    const token = req.headers["x-auth-token"];
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
     if (!token) {
       return res.status(401).json({
         success: false,

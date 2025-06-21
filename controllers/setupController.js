@@ -30,6 +30,7 @@ const handleAccountSetup = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+      message: "Company data created successfully.",
       companyData: {
         dataId: companyData._id,
         userId: req.user,
