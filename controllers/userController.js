@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
-const { setUser, getUser } = require("../services/authService");
+const { getUser } = require("../services/authService");
 
 const handleUserSignUp = async (req, res) => {
   let { fullname, email, password } = req.body;
@@ -27,6 +27,7 @@ const handleUserSignUp = async (req, res) => {
 
     return res.status(201).json({
       success: true,
+      message: "Signup successful.",
       user: {
         id: user._id,
         fullname: user.fullname,
@@ -72,15 +73,13 @@ const handleUserSignIn = async (req, res) => {
       });
     }
 
-    const token = setUser(user);
-
     return res.status(200).json({
       success: true,
+      message: "Signin successful.",
       user: {
         id: user._id,
         fullname: user.fullname,
         email: user.email,
-        token: token,
       },
     });
   } catch (error) {
@@ -122,6 +121,7 @@ const checkTokenValidation = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      message: "Token validated successfully.",
       user: {
         id: user._id,
         fullname: user.fullname,

@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const generateOTP = require("../helpers/otpGenerator");
 const { sendEmail } = require("../services/emailService");
+const { setUser } = require("../services/authService");
 
 // Helper for rate limiting that tracks last request time per email
 const lastOtpRequestTime = new Map();
@@ -79,17 +80,17 @@ const handleOtpVerification = async (req, res) => {
       });
     }
 
-    if (user.isVerified) {
-      if (user.verificationCode || user.codeExpiresAt) {
-        user.verificationCode = undefined;
-        user.codeExpiresAt = undefined;
-        await user.save();
-      }
-      return res.status(200).json({
-        success: true,
-        message: "Email is already verified.",
-      });
-    }
+    // if (user.isVerified) {
+    //   if (user.verificationCode || user.codeExpiresAt) {
+    //     user.verificationCode = undefined;
+    //     user.codeExpiresAt = undefined;
+    //     await user.save();
+    //   }
+    //   return res.status(200).json({
+    //     success: true,
+    //     message: "Email is already verified.",
+    //   });
+    // }
 
     if (!user.verificationCode) {
       return res.status(400).json({
@@ -118,9 +119,18 @@ const handleOtpVerification = async (req, res) => {
       user.codeExpiresAt = undefined;
       await user.save();
 
+      const token = setUser(user);
+
       return res.status(200).json({
         success: true,
         message: "Email verified successfully.",
+        token,
+        user: {
+          id: user._id,
+          fullname: user.fullname,
+          email: user.email,
+          isVerified: true,
+        },
       });
     } else {
       return res.status(400).json({
@@ -176,12 +186,12 @@ const handleResendOtp = async (req, res) => {
       });
     }
 
-    if (user.isVerified) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is already verified. No new code is needed.",
-      });
-    }
+    // if (user.isVerified) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Email is already verified. No new code is needed.",
+    //   });
+    // }
 
     const newOtp = generateOTP();
     const newExpiryTime = new Date(Date.now() + 10 * 60 * 1000);
