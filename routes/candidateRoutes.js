@@ -4,6 +4,8 @@ const router = express.Router();
 const {
   handleCandidateCreation,
   handleCandidateLetterUpload,
+  getCandidateData,
+  deleteCandidateLetter,
 } = require("../controllers/candidateController");
 const auth = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/multerMiddleware");
@@ -14,6 +16,12 @@ router.post(
   auth,
   upload.single("file"),
   handleCandidateLetterUpload
+);
+router.get("/:candidateId", auth, getCandidateData);
+router.delete(
+  "/delete-letter/:candidateId/:actualId",
+  auth,
+  deleteCandidateLetter
 );
 
 module.exports = router;

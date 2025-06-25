@@ -122,7 +122,7 @@ const deleteUploadedFile = async (req, res) => {
   const { actualId } = req.params;
   const publicId = `company-files/${actualId}`;
 
-  if (!actualId) {
+  if (!publicId) {
     return res.status(400).json({
       success: false,
       message: "File public ID is required",

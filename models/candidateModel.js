@@ -2,18 +2,18 @@ const mongoose = require("mongoose");
 
 const candidateSchema = new mongoose.Schema(
   {
-    candidateFullName: {
+    fullName: {
       type: String,
       required: true,
       trim: true,
     },
-    candidateLetterType: {
+    letterType: {
       type: String,
       required: true,
       trim: true,
       enum: ["Offer", "Completion"],
     },
-    candidateLetterFile: [
+    letterFile: [
       {
         url: String,
         publicId: String,
