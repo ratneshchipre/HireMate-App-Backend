@@ -7,14 +7,14 @@ const handleFileUpload = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        error: "No file uploaded.",
+        message: "No file uploaded.",
       });
     }
 
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        error: "User not authenticated or invalid user ID.",
+        message: "User not authenticated or invalid user ID.",
       });
     }
 
@@ -24,13 +24,13 @@ const handleFileUpload = async (req, res) => {
     if (!company) {
       return res.status(404).json({
         success: false,
-        error: "Company not found.",
+        message: "Company not found.",
       });
     }
 
-    // if (company.uploadedFile && company.uploadedFile.publicId) {
-    //   await cloudinary.uploader.destroy(company.uploadedFile.publicId);
-    // }
+    if (company.uploadedFile && company.uploadedFile.publicId) {
+      await cloudinary.uploader.destroy(company.uploadedFile.publicId);
+    }
 
     const uploadResult = await uploadToCloudinary(
       req.file.buffer,
@@ -47,7 +47,7 @@ const handleFileUpload = async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        error: "Unsupported file type.",
+        message: "Unsupported file type.",
       });
     }
 
@@ -71,7 +71,7 @@ const handleFileUpload = async (req, res) => {
     console.error("File upload error:", error);
     return res.status(500).json({
       success: false,
-      error: "Error uploading file",
+      message: "Error uploading file",
       details: error.message,
     });
   }
@@ -118,4 +118,63 @@ const getUploadedFile = async (req, res) => {
   }
 };
 
-module.exports = { handleFileUpload, getUploadedFile };
+const deleteUploadedFile = async (req, res) => {
+  const { actualId } = req.params;
+  const publicId = `company-files/${actualId}`;
+
+  if (!actualId) {
+    return res.status(400).json({
+      success: false,
+      message: "File public ID is required",
+    });
+  }
+
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated or invalid user ID.",
+      });
+    }
+
+    const userId = req.user;
+    const company = await Company.findOne({ userId });
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found.",
+      });
+    }
+
+    if (!company.uploadedFile || company.uploadedFile.publicId !== publicId) {
+      return res.status(404).json({
+        success: false,
+        message: "File not found or public ID mismatch.",
+      });
+    }
+
+    await cloudinary.uploader.destroy(publicId);
+
+    company.uploadedFile = null;
+    await company.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "File deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error deleting file.",
+      details: error.message,
+    });
+  }
+};
+
+module.exports = {
+  handleFileUpload,
+  getUploadedFile,
+  deleteUploadedFile,
+};

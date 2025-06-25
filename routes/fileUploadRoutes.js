@@ -6,9 +6,11 @@ const upload = require("../middlewares/multerMiddleware");
 const {
   handleFileUpload,
   getUploadedFile,
+  deleteUploadedFile,
 } = require("../controllers/fileUploadController");
 
 router.post("/upload", auth, upload.single("file"), handleFileUpload);
 router.get("/get-file", auth, getUploadedFile);
+router.post("/delete-file/:actualId", auth, deleteUploadedFile);
 
 module.exports = router;

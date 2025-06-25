@@ -7,21 +7,23 @@ const candidateSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    candidateEmail: {
+    candidateLetterType: {
       type: String,
       required: true,
       trim: true,
+      enum: ["Offer", "Completion"],
     },
-    candidateJoiningDate: {
-      type: Date,
-      required: true,
-      trim: true,
-    },
-    candidateCompletionDate: {
-      type: Date,
-      required: true,
-      trim: true,
-    },
+    candidateLetterFile: [
+      {
+        url: String,
+        publicId: String,
+        uploadedAt: { type: Date },
+        type: {
+          type: String,
+          enum: ["pdf"],
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

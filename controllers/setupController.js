@@ -74,6 +74,7 @@ const getCompanyData = async (req, res) => {
         industry: company.industry,
         role: company.role,
         size: company.size,
+        uploadedFile: company.uploadedFile,
       },
     });
   } catch (error) {
