@@ -96,12 +96,12 @@ const updateCompanyData = async (req, res) => {
     });
   }
 
-  if (!name || !address || !industry || !role || !size) {
-    return res.status(400).json({
-      success: false,
-      message: "All fields are required.",
-    });
-  }
+  // if (!name || !address || !industry || !role || !size) {
+  //   return res.status(400).json({
+  //     success: false,
+  //     message: "All fields are required.",
+  //   });
+  // }
 
   try {
     const company = await Company.findOneAndUpdate(
