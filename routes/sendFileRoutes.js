@@ -6,6 +6,10 @@ const {
 } = require("../controllers/sendFileController");
 const auth = require("../middlewares/authMiddleware");
 
-router.post("/send-file", auth, handleFileSendingViaEmail);
+router.post(
+  "/send-file/:companyId/:candidateId",
+  auth,
+  handleFileSendingViaEmail
+);
 
 module.exports = router;

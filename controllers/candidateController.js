@@ -3,9 +3,9 @@ const uploadToCloudinary = require("../helpers/cloudinaryUpload");
 const cloudinary = require("../utils/cloudinary");
 
 const handleCandidateCreation = async (req, res) => {
-  const { fullName, letterType } = req.body;
+  const { fullName, email, letterType } = req.body;
 
-  if ((!fullName, !letterType)) {
+  if ((!fullName, !email, !letterType)) {
     return res.status(400).json({
       success: false,
       message: "All fields are required",
@@ -15,6 +15,7 @@ const handleCandidateCreation = async (req, res) => {
   try {
     const candidate = await Candidate.create({
       fullName,
+      email,
       letterType,
     });
 
@@ -24,6 +25,7 @@ const handleCandidateCreation = async (req, res) => {
       candidateData: {
         candidateId: candidate._id,
         fullName: candidate.fullName,
+        email: candidate.email,
         letterType: candidate.letterType,
       },
     });
@@ -67,25 +69,32 @@ const handleCandidateLetterUpload = async (req, res) => {
 
     if (mimeType === "application/pdf") {
       fileType = "pdf";
+    } else if (mimeType.startsWith("image/")) {
+      fileType = mimeType.split("/")[1];
     } else {
       return res.status(400).json({
         success: false,
-        message: "Unsupported file type. Only PDF is allowed.",
+        message:
+          "Unsupported file type. Only PDF and images are allowed by controller.",
       });
     }
 
     const letterUploadResult = await uploadToCloudinary(
       req.file.buffer,
-      "candidate-files"
+      "candidate-files",
+      mimeType
     );
+
+    console.log("Cloudinary Upload Result URL:", letterUploadResult.secure_url);
 
     if (fileType) {
       if (!candidate.letterFile) {
         candidate.letterFile = [];
       }
+      const newPublicId = letterUploadResult.public_id;
       candidate.letterFile.push({
         url: letterUploadResult.secure_url,
-        publicId: letterUploadResult.public_id,
+        publicId: newPublicId,
         uploadedAt: new Date(),
         type: fileType,
       });
@@ -134,6 +143,7 @@ const getCandidateData = async (req, res) => {
       candidateData: {
         candidateId: candidate._id,
         fullName: candidate.fullName,
+        email: candidate.email,
         letterType: candidate.letterType,
         letterFile: candidate.letterFile,
       },
