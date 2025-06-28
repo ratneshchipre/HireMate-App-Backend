@@ -28,20 +28,11 @@ const handleFileUpload = async (req, res) => {
       });
     }
 
-    if (company.uploadedFile && company.uploadedFile.publicId) {
-      await cloudinary.uploader.destroy(company.uploadedFile.publicId);
-    }
-
-    const uploadResult = await uploadToCloudinary(
-      req.file.buffer,
-      "company-files"
-    );
-
     const mimeType = req.file.mimetype;
     let fileType = "";
 
     if (mimeType.startsWith("image/")) {
-      fileType = "image";
+      fileType = mimeType.split("/")[1];
     } else if (mimeType === "application/pdf") {
       fileType = "pdf";
     } else {
@@ -50,6 +41,16 @@ const handleFileUpload = async (req, res) => {
         message: "Unsupported file type.",
       });
     }
+
+    if (company.uploadedFile && company.uploadedFile.publicId) {
+      await cloudinary.uploader.destroy(company.uploadedFile.publicId);
+    }
+
+    const uploadResult = await uploadToCloudinary(
+      req.file.buffer,
+      "company-files",
+      mimeType
+    );
 
     if (fileType) {
       company.uploadedFile = {

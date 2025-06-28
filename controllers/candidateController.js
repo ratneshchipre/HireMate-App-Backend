@@ -1,6 +1,7 @@
 const Candidate = require("../models/candidateModel");
 const uploadToCloudinary = require("../helpers/cloudinaryUpload");
 const cloudinary = require("../utils/cloudinary");
+const Company = require("../models/companyModel");
 
 const handleCandidateCreation = async (req, res) => {
   const { fullName, email, letterType } = req.body;
@@ -13,10 +14,28 @@ const handleCandidateCreation = async (req, res) => {
   }
 
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated or invalid user ID.",
+      });
+    }
+
+    const userId = req.user;
+    const company = await Company.findOne({ userId });
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found for the authenticated user.",
+      });
+    }
+
     const candidate = await Candidate.create({
       fullName,
       email,
       letterType,
+      companyId: company._id,
     });
 
     return res.status(201).json({
@@ -74,8 +93,7 @@ const handleCandidateLetterUpload = async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        message:
-          "Unsupported file type. Only PDF and images are allowed by controller.",
+        message: "Unsupported file type. Only PDF and images are allowed.",
       });
     }
 
@@ -200,10 +218,48 @@ const deleteCandidateLetter = async (req, res) => {
       message: "File deleted successfully.",
     });
   } catch (error) {
-    console.error("Error deleting candidate file:", error);
+    console.error("Error deleting candidate letter:", error);
     return res.status(500).json({
       success: false,
-      message: "Error deleting file.",
+      message: "Failed to delete candidate letter.",
+      details: error.message,
+    });
+  }
+};
+
+const getAllCompanyCandidates = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated or invalid user ID.",
+      });
+    }
+
+    const userId = req.user;
+    const company = await Company.findOne({ userId });
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found for the authenticated user.",
+      });
+    }
+
+    const companyId = company._id;
+
+    const candidates = await Candidate.find({ companyId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Company candidates fetched successfully.",
+      candidates,
+    });
+  } catch (error) {
+    console.error("Error fetching company candidates:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch candidates for the company.",
       details: error.message,
     });
   }
@@ -214,4 +270,5 @@ module.exports = {
   handleCandidateLetterUpload,
   getCandidateData,
   deleteCandidateLetter,
+  getAllCompanyCandidates,
 };
