@@ -1,9 +1,18 @@
 const Company = require("../models/companyModel");
 
 const handleAccountSetup = async (req, res) => {
-  const { name, address, industry, role, size } = req.body;
+  const { name, email, address, industry, role, size, website, phoneNumber } =
+    req.body;
 
-  if (!name || !address || !industry || !role || !size) {
+  if (
+    !name ||
+    !email ||
+    !address ||
+    !industry ||
+    !role ||
+    !size ||
+    !phoneNumber
+  ) {
     return res.status(400).json({
       success: false,
       message: "All fields are required.",
@@ -22,10 +31,13 @@ const handleAccountSetup = async (req, res) => {
     const companyData = await Company.create({
       userId: req.user,
       name,
+      email,
       address,
       industry,
       role,
       size,
+      website,
+      phoneNumber,
     });
 
     return res.status(201).json({
@@ -35,10 +47,13 @@ const handleAccountSetup = async (req, res) => {
         dataId: companyData._id,
         userId: req.user,
         name: companyData.name,
+        email: companyData.email,
         address: companyData.address,
         industry: companyData.industry,
         role: companyData.role,
         size: companyData.size,
+        website: companyData.website,
+        phoneNumber: companyData.phoneNumber,
       },
     });
   } catch (error) {
@@ -70,11 +85,14 @@ const getCompanyData = async (req, res) => {
         dataId: company._id,
         userId: company.userId,
         name: company.name,
+        email: company.email,
         address: company.address,
         industry: company.industry,
         role: company.role,
         size: company.size,
         uploadedFile: company.uploadedFile,
+        website: company.website,
+        phoneNumber: company.phoneNumber,
       },
     });
   } catch (error) {
@@ -88,7 +106,8 @@ const getCompanyData = async (req, res) => {
 
 const updateCompanyData = async (req, res) => {
   const { userId } = req.params;
-  const { name, address, industry, role, size } = req.body;
+  const { name, email, address, industry, role, size, website, phoneNumber } =
+    req.body;
 
   if (!userId) {
     return res.status(400).json({
@@ -111,10 +130,13 @@ const updateCompanyData = async (req, res) => {
       },
       {
         name,
+        email,
         address,
         industry,
         role,
         size,
+        website,
+        phoneNumber,
       },
       {
         new: true,
@@ -135,10 +157,13 @@ const updateCompanyData = async (req, res) => {
       companyData: {
         dataId: company._id,
         name: company.name,
+        email: company.email,
         address: company.address,
         industry: company.industry,
         role: company.role,
         size: company.size,
+        website: company.website,
+        phoneNumber: company.phoneNumber,
       },
     });
   } catch (error) {
