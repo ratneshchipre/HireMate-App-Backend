@@ -48,7 +48,7 @@ const handleFileUpload = async (req, res) => {
 
     const uploadResult = await uploadToCloudinary(
       req.file.buffer,
-      "company-files",
+      "hiremate/company-files",
       mimeType
     );
 
@@ -121,7 +121,7 @@ const getUploadedFile = async (req, res) => {
 
 const deleteUploadedFile = async (req, res) => {
   const { actualId } = req.params;
-  const publicId = `company-files/${actualId}`;
+  const publicId = `hiremate/company-files/${actualId}`;
 
   if (!publicId) {
     return res.status(400).json({

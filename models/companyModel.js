@@ -33,7 +33,7 @@ const companySchema = new mongoose.Schema(
       uploadedAt: { type: Date },
       type: {
         type: String,
-        enum: ["image", "pdf"],
+        enum: ["image", "pdf", "jpeg", "png"],
       },
     },
     role: {

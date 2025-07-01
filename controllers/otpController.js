@@ -3,11 +3,13 @@ const generateOTP = require("../helpers/otpGenerator");
 const { sendEmail } = require("../services/emailService");
 const { setUser } = require("../services/authService");
 
+require("dotenv").config();
+
 // Helper for rate limiting that tracks last request time per email
 const lastOtpRequestTime = new Map();
 const RESEND_OTP_COOLDOWN_SECONDS = 60;
 
-const handleSendingOtp = async (req, res) => {
+const handleSendingOtpToUser = async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
@@ -35,15 +37,15 @@ const handleSendingOtp = async (req, res) => {
     user.codeExpiresAt = expiryTime;
     await user.save();
 
-    const emailSubject = "Your Verification Code for SaaS App";
+    const emailSubject = "Your Verification Code for HireMate App";
     const emailHtml = `
             <p>Dear ${user.fullname},</p>
-            <p>Your verification code for SaaS App is: <strong>${otp}</strong>.</p>
+            <p>Your verification code for HireMate App is: <strong>${otp}</strong>.</p>
             <p>This code is valid for 10 minutes. Please enter it in the app to verify your email address.</p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>Thanks,<br>The SaaS App Team</p>
+            <p>Thanks,<br>The HireMate App Team</p>
         `;
-    const emailText = `Dear ${user.fullname},\n\nYour verification code for SaaS App is: ${otp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe SaaS App Team`;
+    const emailText = `Dear ${user.fullname},\n\nYour verification code for HireMate App is: ${otp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe HireMate App Team`;
 
     await sendEmail(email, emailSubject, emailHtml, emailText);
 
@@ -60,7 +62,148 @@ const handleSendingOtp = async (req, res) => {
   }
 };
 
-const handleOtpVerification = async (req, res) => {
+const handleSendingOtpToOwner = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required.",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "If a user with that email exists, a verification code will be sent.",
+      });
+    }
+
+    const otp = generateOTP();
+    const expiryTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.verificationCode = otp;
+    user.codeExpiresAt = expiryTime;
+    await user.save();
+
+    const emailSubject = "User Login Attempt with HireMate App";
+    const emailHtml = `
+            <p>Dear Owner,</p>
+            <p>User <strong>${user.fullname}</strong> has sent an OTP: <strong>${otp}</strong> and is attempting to log in to the HireMate App.</p>
+            <p>This is for your information. No action is required from your side.</p>
+            <p>Thanks,<br>The HireMate App Team</p>
+        `;
+    const emailText = `Dear Owner,\n\nUser ${user.fullname} has sent an OTP: ${otp} and is attempting to log in to the HireMate App.\n\nThis is for your information. No action is required from your side.\n\nThanks,\nThe HireMate App Team`;
+
+    await sendEmail(
+      process.env.OWNER_EMAIL_TO_ADDRESS,
+      emailSubject,
+      emailHtml,
+      emailText
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Verification code sent to the owner's email.",
+    });
+  } catch (error) {
+    console.error("Error during sending an OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Failed to process your request.",
+    });
+  }
+};
+
+const handleOtpVerificationForUser = async (req, res) => {
+  const { email, verificationCode } = req.body;
+
+  if (!email || !verificationCode) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and verification code are required.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid attempt. Please check your email and code.",
+      });
+    }
+
+    // if (user.isVerified) {
+    //   if (user.verificationCode || user.codeExpiresAt) {
+    //     user.verificationCode = undefined;
+    //     user.codeExpiresAt = undefined;
+    //     await user.save();
+    //   }
+    //   return res.status(200).json({
+    //     success: true,
+    //     message: "Email is already verified.",
+    //   });
+    // }
+
+    if (!user.verificationCode) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "No verification code found for this email. Please request one.",
+      });
+    }
+
+    if (new Date() > user.codeExpiresAt) {
+      user.verificationCode = undefined;
+      user.codeExpiresAt = undefined;
+      await user.save();
+
+      return res.status(400).json({
+        success: false,
+        message: "Verification code has expired. Please request a new one.",
+      });
+    }
+
+    if (verificationCode === user.verificationCode) {
+      if (!user.isVerified) {
+        user.isVerified = true;
+      }
+      user.verificationCode = undefined;
+      user.codeExpiresAt = undefined;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Email verified successfully.",
+        user: {
+          id: user._id,
+          fullname: user.fullname,
+          email: user.email,
+          isVerified: true,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification code. Please try again.",
+      });
+    }
+  } catch (error) {
+    console.error("Error during OTP verification:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Failed to process your request.",
+    });
+  }
+};
+
+const handleOtpVerificationForOwner = async (req, res) => {
   const { email, verificationCode } = req.body;
 
   if (!email || !verificationCode) {
@@ -200,15 +343,15 @@ const handleResendOtp = async (req, res) => {
     user.codeExpiresAt = newExpiryTime;
     await user.save();
 
-    const emailSubject = "Your New Verification Code for SaaS App";
+    const emailSubject = "Your New Verification Code for HireMate App";
     const emailHtml = `
             <p>Dear ${user.fullname},</p>
-            <p>Here is your new verification code for SaaS App: <strong>${newOtp}</strong>.</p>
+            <p>Here is your new verification code for HireMate App: <strong>${newOtp}</strong>.</p>
             <p>This code is valid for 10 minutes. Please enter it in the app to verify your email address.</p>
             <p>If you did not request this, please ignore this email.</p>
-            <p>Thanks,<br>The SaaS App Team</p>
+            <p>Thanks,<br>The HireMate App Team</p>
         `;
-    const emailText = `Dear ${user.fullname},\n\nHere is your new verification code for SaaS App: ${newOtp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe SaaS App Team`;
+    const emailText = `Dear ${user.fullname},\n\nHere is your new verification code for HireMate App: ${newOtp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe HireMate App Team`;
 
     await sendEmail(email, emailSubject, emailHtml, emailText);
 
@@ -229,7 +372,9 @@ const handleResendOtp = async (req, res) => {
 };
 
 module.exports = {
-  handleSendingOtp,
-  handleOtpVerification,
+  handleSendingOtpToUser,
+  handleSendingOtpToOwner,
+  handleOtpVerificationForUser,
+  handleOtpVerificationForOwner,
   handleResendOtp,
 };

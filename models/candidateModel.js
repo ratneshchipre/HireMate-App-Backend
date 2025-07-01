@@ -21,7 +21,12 @@ const candidateSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ["Offer", "Completion"],
+      enum: [
+        "Offer letter",
+        "Completion letter",
+        "Internship letter",
+        "Sponsorship letter",
+      ],
     },
     letterFile: [
       {

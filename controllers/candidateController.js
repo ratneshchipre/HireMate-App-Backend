@@ -99,7 +99,7 @@ const handleCandidateLetterUpload = async (req, res) => {
 
     const letterUploadResult = await uploadToCloudinary(
       req.file.buffer,
-      "candidate-files",
+      "hiremate/candidate-files",
       mimeType
     );
 
@@ -178,7 +178,7 @@ const getCandidateData = async (req, res) => {
 
 const deleteCandidateLetter = async (req, res) => {
   const { candidateId, actualId } = req.params;
-  const publicId = `candidate-files/${actualId}`;
+  const publicId = `hiremate/candidate-files/${actualId}`;
 
   if (!candidateId || !publicId) {
     return res.status(400).json({
