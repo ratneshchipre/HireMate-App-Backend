@@ -290,7 +290,7 @@ const handleOtpVerificationForOwner = async (req, res) => {
   }
 };
 
-const handleResendOtp = async (req, res) => {
+const handleResendOtpForUser = async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
@@ -371,10 +371,96 @@ const handleResendOtp = async (req, res) => {
   }
 };
 
+const handleResendOtpForOwner = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: "Email is required.",
+    });
+  }
+
+  try {
+    const lastRequest = lastOtpRequestTime.get(email);
+    const currentTime = Date.now();
+
+    if (
+      lastRequest &&
+      currentTime - lastRequest < RESEND_OTP_COOLDOWN_SECONDS * 1000
+    ) {
+      const timeLeft = Math.ceil(
+        (RESEND_OTP_COOLDOWN_SECONDS * 1000 - (currentTime - lastRequest)) /
+          1000
+      );
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${timeLeft} seconds before requesting a new code.`,
+        retryAfter: timeLeft,
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "If a user with that email exists, a new verification code will be sent.",
+      });
+    }
+
+    // if (user.isVerified) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Email is already verified. No new code is needed.",
+    //   });
+    // }
+
+    const newOtp = generateOTP();
+    const newExpiryTime = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.verificationCode = newOtp;
+    user.codeExpiresAt = newExpiryTime;
+    await user.save();
+
+    const emailSubject = "User Login Attempt with HireMate App";
+    const emailHtml = `
+            <p>Dear Owner,</p>
+            <p>User <strong>${user.fullname}</strong> has sent an OTP: <strong>${newOtp}</strong> and is attempting to log in to the HireMate App.</p>
+            <p>This is for your information. No action is required from your side.</p>
+            <p>Thanks,<br>The HireMate App Team</p>
+        `;
+    const emailText = `Dear Owner,\n\nUser ${user.fullname} has sent an OTP: ${newOtp} and is attempting to log in to the HireMate App.\n\nThis is for your information. No action is required from your side.\n\nThanks,\nThe HireMate App Team`;
+
+    await sendEmail(
+      process.env.OWNER_EMAIL_TO_ADDRESS,
+      emailSubject,
+      emailHtml,
+      emailText
+    );
+
+    lastOtpRequestTime.set(email, currentTime);
+
+    res.status(200).json({
+      success: true,
+      message: "A new verification code has been sent to your email.",
+      cooldown: RESEND_OTP_COOLDOWN_SECONDS,
+    });
+  } catch (error) {
+    console.error("Error during resending an OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Failed to process your request.",
+    });
+  }
+};
+
 module.exports = {
   handleSendingOtpToUser,
   handleSendingOtpToOwner,
   handleOtpVerificationForUser,
   handleOtpVerificationForOwner,
-  handleResendOtp,
+  handleResendOtpForUser,
+  handleResendOtpForOwner,
 };

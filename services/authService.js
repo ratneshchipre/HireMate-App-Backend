@@ -9,7 +9,7 @@ const setUser = (user) => {
       id: user._id,
     },
     secret,
-    { expiresIn: "12h" }
+    { expiresIn: "120d" }
   );
 };
 

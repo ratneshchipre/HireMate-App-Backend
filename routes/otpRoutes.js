@@ -6,7 +6,8 @@ const {
   handleSendingOtpToOwner,
   handleOtpVerificationForUser,
   handleOtpVerificationForOwner,
-  handleResendOtp,
+  handleResendOtpForUser,
+  handleResendOtpForOwner,
 } = require("../controllers/otpController");
 
 router
@@ -14,6 +15,7 @@ router
   .post("/send-otp/owner", handleSendingOtpToOwner)
   .post("/verify-otp/user", handleOtpVerificationForUser)
   .post("/verify-otp/owner", handleOtpVerificationForOwner)
-  .post("/resend-otp", handleResendOtp);
+  .post("/resend-otp/user", handleResendOtpForUser)
+  .post("/resend-otp/owner", handleResendOtpForOwner);
 
 module.exports = router;
