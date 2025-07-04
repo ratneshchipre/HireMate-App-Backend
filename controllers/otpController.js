@@ -444,7 +444,7 @@ const handleResendOtpForOwner = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "A new verification code has been sent to your email.",
+      message: "A new verification code has been sent to the owner's email.",
       cooldown: RESEND_OTP_COOLDOWN_SECONDS,
     });
   } catch (error) {

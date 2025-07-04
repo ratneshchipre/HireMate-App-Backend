@@ -4,6 +4,9 @@ const router = express.Router();
 const {
   handleUserSignUp,
   handleUserSignIn,
+  handleResetPasswordOtpRequest,
+  verifyResetPasswordOtp,
+  confirmResetPassword,
   checkTokenValidation,
 } = require("../controllers/userController");
 
@@ -19,5 +22,8 @@ router.get("/", auth, async (req, res) => {
 
 router.post("/sign-up", handleUserSignUp);
 router.post("/log-in", handleUserSignIn);
+router.post("/reset-password-otp-request", handleResetPasswordOtpRequest);
+router.post("/reset-password-verify-otp", verifyResetPasswordOtp);
+router.post("/reset-password-confirm", confirmResetPassword);
 
 module.exports = router;
