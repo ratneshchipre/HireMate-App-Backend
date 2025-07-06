@@ -26,6 +26,7 @@ const candidateSchema = new mongoose.Schema(
         "Completion letter",
         "Internship letter",
         "Sponsorship letter",
+        "Experience letter",
       ],
     },
     letterFile: [

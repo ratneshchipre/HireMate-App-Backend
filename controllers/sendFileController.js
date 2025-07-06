@@ -2,15 +2,43 @@ const Candidate = require("../models/candidateModel");
 const Company = require("../models/companyModel");
 const { sendEmail } = require("../services/emailService");
 
+const isValidEmail = (email) => {
+  return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+    email
+  );
+};
+
 const handleFileSendingViaEmail = async (req, res) => {
   try {
     const { companyId, candidateId } = req.params;
+    const { ccRecipients } = req.body;
 
     if (!companyId || !candidateId) {
       return res.status(400).json({
         success: false,
         message: "Company ID and Candidate ID are required.",
       });
+    }
+
+    let parsedCcRecipients = [];
+
+    if (
+      ccRecipients &&
+      typeof ccRecipients === "string" &&
+      ccRecipients.trim() !== ""
+    ) {
+      parsedCcRecipients = ccRecipients
+        .split(/[,;]/)
+        .map((email) => email.trim())
+        .filter((email) => email !== "" && isValidEmail(email));
+
+      if (parsedCcRecipients.length === 0 && ccRecipients.trim() !== "") {
+        console.warn(`No valid CC emails found in input: "${ccRecipients}"`);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid CC email format provided.",
+        });
+      }
     }
 
     const company = await Company.findById(companyId);
@@ -45,6 +73,7 @@ const handleFileSendingViaEmail = async (req, res) => {
     const candidateEmail = candidate.email;
     const candidateFullName = candidate.fullName;
     const companyName = company.name;
+    const companyEmail = company.email;
     const documentUrl = latestLetterFile.url;
     const documentTitle = `${candidate.fullName}'s_${candidate.letterType}_Letter`;
     const documentType = latestLetterFile.type;
@@ -79,7 +108,9 @@ const handleFileSendingViaEmail = async (req, res) => {
       emailSubject,
       emailHtml,
       emailText,
-      attachments
+      attachments,
+      companyEmail,
+      parsedCcRecipients
     );
 
     return res.status(200).json({

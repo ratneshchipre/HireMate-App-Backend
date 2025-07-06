@@ -2,6 +2,7 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const { getUser } = require("../services/authService");
 const generateOTP = require("../helpers/otpGenerator");
+const { sendEmail } = require("../services/emailService");
 
 const handleUserSignUp = async (req, res) => {
   let { fullname, email, password } = req.body;
@@ -154,12 +155,14 @@ const verifyResetPasswordOtp = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select(
+      "+resetPasswordToken +resetPasswordExpires"
+    );
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found.",
+        message: "User with this email does not exist.",
       });
     }
 
@@ -188,9 +191,9 @@ const verifyResetPasswordOtp = async (req, res) => {
 
 const confirmResetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword, confirmPassword } = req.body;
+    const { email, newPassword, confirmPassword } = req.body;
 
-    if (!email || !otp || !newPassword || !confirmPassword) {
+    if (!email || !newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
         message: "All fields are required.",
@@ -213,16 +216,16 @@ const confirmResetPassword = async (req, res) => {
       });
     }
 
-    const isOtpValid =
-      user.resetPasswordToken === otp && user.resetPasswordExpires > Date.now();
+    // const isOtpValid =
+    //   user.resetPasswordToken === otp && user.resetPasswordExpires > Date.now();
 
-    if (!isOtpValid) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid or expired OTP. Please restart the reset password process.",
-      });
-    }
+    // if (!isOtpValid) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message:
+    //       "Invalid or expired OTP. Please restart the reset password process.",
+    //   });
+    // }
 
     const hashPass = await bcrypt.hash(newPassword, 10);
     user.password = hashPass;

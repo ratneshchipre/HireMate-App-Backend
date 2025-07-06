@@ -25,11 +25,14 @@ const sendEmail = async (
   subject,
   htmlContent,
   textContent = "",
-  attachments = []
+  attachments = [],
+  fromEmail,
+  ccRecipients = []
 ) => {
   const mailOptions = {
-    from: process.env.EMAIL_FROM_ADDRESS,
+    from: fromEmail,
     to,
+    cc: ccRecipients,
     subject,
     text: textContent,
     html: htmlContent,
