@@ -6,7 +6,7 @@ const Company = require("../models/companyModel");
 const handleCandidateCreation = async (req, res) => {
   const { fullName, email, letterType } = req.body;
 
-  if ((!fullName, !email, !letterType)) {
+  if (!fullName || !email || !letterType) {
     return res.status(400).json({
       success: false,
       message: "All fields are required",

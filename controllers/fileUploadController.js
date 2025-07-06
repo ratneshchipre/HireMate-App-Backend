@@ -32,7 +32,7 @@ const handleFileUpload = async (req, res) => {
     let fileType = "";
 
     if (mimeType.startsWith("image/")) {
-      fileType = mimeType.split("/")[1];
+      fileType = "image";
     } else if (mimeType === "application/pdf") {
       fileType = "pdf";
     } else {

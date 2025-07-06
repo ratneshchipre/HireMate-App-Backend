@@ -47,7 +47,14 @@ const handleSendingOtpToUser = async (req, res) => {
         `;
     const emailText = `Dear ${user.fullname},\n\nYour verification code for HireMate App is: ${otp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe HireMate App Team`;
 
-    await sendEmail(email, emailSubject, emailHtml, emailText);
+    await sendEmail(
+      email,
+      emailSubject,
+      emailHtml,
+      emailText,
+      null,
+      process.env.EMAIL_FROM_ADDRESS
+    );
 
     res.status(200).json({
       success: true,
@@ -103,7 +110,9 @@ const handleSendingOtpToOwner = async (req, res) => {
       process.env.OWNER_EMAIL_TO_ADDRESS,
       emailSubject,
       emailHtml,
-      emailText
+      emailText,
+      null,
+      process.env.EMAIL_FROM_ADDRESS
     );
 
     res.status(200).json({
@@ -353,7 +362,14 @@ const handleResendOtpForUser = async (req, res) => {
         `;
     const emailText = `Dear ${user.fullname},\n\nHere is your new verification code for HireMate App: ${newOtp}. This code is valid for 10 minutes. Please enter it in the app to verify your email address.\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe HireMate App Team`;
 
-    await sendEmail(email, emailSubject, emailHtml, emailText);
+    await sendEmail(
+      email,
+      emailSubject,
+      emailHtml,
+      emailText,
+      null,
+      process.env.EMAIL_FROM_ADDRESS
+    );
 
     lastOtpRequestTime.set(email, currentTime);
 
@@ -437,7 +453,9 @@ const handleResendOtpForOwner = async (req, res) => {
       process.env.OWNER_EMAIL_TO_ADDRESS,
       emailSubject,
       emailHtml,
-      emailText
+      emailText,
+      null,
+      process.env.EMAIL_FROM_ADDRESS
     );
 
     lastOtpRequestTime.set(email, currentTime);

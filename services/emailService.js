@@ -30,7 +30,7 @@ const sendEmail = async (
   ccRecipients = []
 ) => {
   const mailOptions = {
-    from: fromEmail,
+    from: fromEmail ? fromEmail : process.env.EMAIL_FROM_ADDRESS,
     to,
     cc: ccRecipients,
     subject,

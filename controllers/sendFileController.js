@@ -20,27 +20,6 @@ const handleFileSendingViaEmail = async (req, res) => {
       });
     }
 
-    let parsedCcRecipients = [];
-
-    if (
-      ccRecipients &&
-      typeof ccRecipients === "string" &&
-      ccRecipients.trim() !== ""
-    ) {
-      parsedCcRecipients = ccRecipients
-        .split(/[,;]/)
-        .map((email) => email.trim())
-        .filter((email) => email !== "" && isValidEmail(email));
-
-      if (parsedCcRecipients.length === 0 && ccRecipients.trim() !== "") {
-        console.warn(`No valid CC emails found in input: "${ccRecipients}"`);
-        return res.status(400).json({
-          success: false,
-          message: "Invalid CC email format provided.",
-        });
-      }
-    }
-
     const company = await Company.findById(companyId);
 
     if (!company) {
@@ -59,6 +38,27 @@ const handleFileSendingViaEmail = async (req, res) => {
       });
     }
 
+    if (
+      ccRecipients &&
+      typeof ccRecipients === "string" &&
+      ccRecipients.trim() !== ""
+    ) {
+      company.ccRecipients = ccRecipients
+        .split(/[,;]/)
+        .map((email) => email.trim())
+        .filter((email) => email !== "" && isValidEmail(email));
+
+      if (company.ccRecipients.length === 0 && ccRecipients.trim() !== "") {
+        console.warn(`No valid CC emails found in input: "${ccRecipients}"`);
+        return res.status(400).json({
+          success: false,
+          message: "Invalid CC email format provided.",
+        });
+      }
+    }
+
+    await company.save();
+
     const latestLetterFile = candidate.letterFile.sort(
       (a, b) => b.uploadedAt - a.uploadedAt
     )[0];
@@ -74,6 +74,7 @@ const handleFileSendingViaEmail = async (req, res) => {
     const candidateFullName = candidate.fullName;
     const companyName = company.name;
     const companyEmail = company.email;
+    const companyCCRecipients = company.ccRecipients;
     const documentUrl = latestLetterFile.url;
     const documentTitle = `${candidate.fullName}'s_${candidate.letterType}_Letter`;
     const documentType = latestLetterFile.type;
@@ -110,7 +111,7 @@ const handleFileSendingViaEmail = async (req, res) => {
       emailText,
       attachments,
       companyEmail,
-      parsedCcRecipients
+      companyCCRecipients
     );
 
     return res.status(200).json({

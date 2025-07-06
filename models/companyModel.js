@@ -55,6 +55,10 @@ const companySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    ccRecipients: {
+      type: Array,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
