@@ -43,12 +43,12 @@ const handleFileSendingViaEmail = async (req, res) => {
       typeof ccRecipients === "string" &&
       ccRecipients.trim() !== ""
     ) {
-      company.ccRecipients = ccRecipients
+      candidate.ccRecipients = ccRecipients
         .split(/[,;]/)
         .map((email) => email.trim())
         .filter((email) => email !== "" && isValidEmail(email));
 
-      if (company.ccRecipients.length === 0 && ccRecipients.trim() !== "") {
+      if (candidate.ccRecipients.length === 0 && ccRecipients.trim() !== "") {
         console.warn(`No valid CC emails found in input: "${ccRecipients}"`);
         return res.status(400).json({
           success: false,
@@ -57,7 +57,7 @@ const handleFileSendingViaEmail = async (req, res) => {
       }
     }
 
-    await company.save();
+    await candidate.save();
 
     const latestLetterFile = candidate.letterFile.sort(
       (a, b) => b.uploadedAt - a.uploadedAt
@@ -74,7 +74,7 @@ const handleFileSendingViaEmail = async (req, res) => {
     const candidateFullName = candidate.fullName;
     const companyName = company.name;
     const companyEmail = company.email;
-    const companyCCRecipients = company.ccRecipients;
+    const companyCCRecipients = candidate.ccRecipients;
     const documentUrl = latestLetterFile.url;
     const documentTitle = `${candidate.fullName}'s_${candidate.letterType}_Letter`;
     const documentType = latestLetterFile.type;

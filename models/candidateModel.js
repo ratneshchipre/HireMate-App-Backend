@@ -40,6 +40,10 @@ const candidateSchema = new mongoose.Schema(
         },
       },
     ],
+    ccRecipients: {
+      type: Array,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
