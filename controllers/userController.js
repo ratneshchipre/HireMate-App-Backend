@@ -250,8 +250,7 @@ const confirmResetPassword = async (req, res) => {
 
 const checkTokenValidation = async (req, res) => {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const token = req.headers["x-auth-token"];
     if (!token) {
       return res.status(401).json({
         success: false,
